@@ -2599,7 +2599,7 @@ atapi_Read
     clr.w   -(sp)
     lsl.l   #8,d1
     movem.l d0/d1,-(sp)                 ;LBA / Number of blocks
-    move.w  #SCSI_READ10<<8,-(sp)       ;ATAPI READ(10) command
+    move.w  #SCSI_READ10,-(sp)       ;ATAPI READ(10) command
     move.l  sp,a4                       ;A4 : CDB for the READ command
 
     moveq   #0,d6                       ;D6: Byte counter
@@ -2623,27 +2623,16 @@ atapi_Read
     subq.w  #1,d5
 .ReadLoop
     movem.w (a5),d0-d3                  ;Reading two long words from the ATA bus
-    rol.w   #8,d0
-    rol.w   #8,d1
-    rol.w   #8,d2
-    rol.w   #8,d3                       ;Swap LSBs <-> MSBs
     movem.w d0-d3,(a0)                  ;Writing the two long words into memory
     addq.l  #8,a0
     dbra    d5,.ReadLoop                ;Loop
     btst    #2,d4                       ;One more double long word to read ?
     beq.b   .NoLong                     ;No, skip
-    move.l  (a5),d0                     ;Reading one long word from the ATA bus
-    rol.w   #8,d0
-    swap    d0
-    rol.w   #8,d0
-    swap    d0                          ;Swap LSBs <-> MSBs
-    move.l  d0,(a0)+                    ;Writing one long word into memory
+    move.l  (a5),(a0)+                  ;Reading one long word from the ATA bus into memory
 .NoLong
     btst    #1,d4                       ;One more long word to read ?
     beq.b   .NoWord                     ;No, skip
-    move.w  (a5),d0                     ;Reading one word from the ATA bus
-    rol.w   #8,d0                       ;Swap LSB <-> MSB
-    move.w  d0,(a0)+                    ;Writing one word into memory
+    move.w  (a5),(a0)+                  ;Reading one word from the ATA bus into memory
 .NoWord
     add.l   d4,d6                       ;Number of bytes already read
     bra.b   .Loop                       ;Loop
@@ -2679,7 +2668,7 @@ atapi_Write
     clr.w   -(sp)
     lsl.l   #8,d1
     movem.l d0/d1,-(sp)                 ;LBA / Number of blocks
-    move.w  #SCSI_WRITE10<<8,-(sp)      ;ATAPI command WRITE(10)
+    move.w  #SCSI_WRITE10,-(sp)      ;ATAPI command WRITE(10)
     move.l  sp,a4                       ;A4 : CDB for the WRITE command
 
     moveq   #0,d6                       ;D6: Byte counter
@@ -2703,26 +2692,19 @@ atapi_Write
     subq.w  #1,d5
 .WriteLoop
     movem.w (a0),d0-d3                  ;Reading two long words from memory
-    rol.w   #8,d0
-    rol.w   #8,d1
-    rol.w   #8,d2
-    rol.w   #8,d3                       ;Swap LSBs <-> MSBs
     movem.w d0-d3,(a5)                  ;Writing the two long words to the ATA bus
     addq.l  #8,a0
     dbra    d5,.WriteLoop               ;Loop
     btst    #2,d4                       ;One more double long word to write ?
     beq.b   .NoLong                     ;No, skip
     move.l  (a0)+,d0                    ;Reading one long word from memory
-    rol.w   #8,d0
     swap    d0
-    rol.w   #8,d0
     swap    d0                          ;Swap LSBs <-> MSBs
     move.l  d0,(a5)                     ;Writing one long word to the ATA bus
 .NoLong
     btst    #1,d4                       ;One more long word to write ?
     beq.b   .NoWord                     ;No, skip
     move.w  (a0)+,d0                    ;Reading one word from memory
-    rol.w   #8,d0                       ;Swap LSB <-> MSB
     move.w  d0,(a5)                     ;Writing one word to the ATA bus
 .NoWord
     add.l   d4,d6                       ;Number of bytes already written
@@ -2805,7 +2787,7 @@ atapi_Seek
     clr.l   -(sp)
     clr.w   -(sp)
     move.l  d0,-(sp)                    ;LBA
-    move.w  #SCSI_SEEK10<<8,-(sp)       ;ATAPI command SEEK(10)
+    move.w  #SCSI_SEEK10,-(sp)       ;ATAPI command SEEK(10)
     move.l  sp,a4                       ;A4 : CDB for the SEEK command
 
     move.l  d1,d6                       ;Save D1 into D6 !
@@ -2845,7 +2827,7 @@ atapi_Eject
     clr.w   -(sp)
     move.w  #$0200,-(sp)                ;Flags : eject
     clr.w   -(sp)
-    move.w  #SCSI_STARTSTOP<<8!1,-(sp)  ;ATAPI command START/STOP UNIT
+    move.w  #SCSI_STARTSTOP!1<<8,-(sp)  ;ATAPI command START/STOP UNIT
     move.l  sp,a4                       ;A4 : CDB for the START/STOP UNIT command
 
     move.l  d1,d6                       ;Save D1 into D6 !
@@ -3882,9 +3864,11 @@ ata_Identify
 
 ;*************** Reading parameters *******************************************
 
-    moveq   #idev_SIZEOF/4-1,d0         ;D0: Long words to read minus 1
+    move.l   #idev_SIZEOF/2-1,d0         ;D0: Words to read minus 1
 .Loop1
-    move.l  (a5),(a0)+                  ;One long word transfered
+    move.w  (a5),d1                     ; Read one word
+    rol.w   #8,d1                       ; Swap LSB <-> MSB
+    move.w  d1,(a0)+                    ; Store 1 Word
     dbra    d0,.Loop1                   ;Loop
     lea     -idev_SIZEOF(a0),a0         ;Restore A0
 
@@ -5152,9 +5136,7 @@ SendPacket
 
     moveq   #5,d1                       ;6 words to send
 .SendLoop
-    move.w  (a4)+,d0
-    rol.w   #8,d0
-    move.w  d0,(a5)                     ;Send the CDB
+    move.w  (a4)+,(a5)                  ;Send the CDB
     dbra    d1,.SendLoop
     lea     -12(a4),a4                  ;Restore A4
 
@@ -5667,9 +5649,7 @@ atapi_ScsiCmd
 ;*************** Write data to the ATA bus ************************************
 
 .WriteLoop
-    move.w  (a0)+,d0                    ;Reading one word from memory
-    rol.w   #8,d0                       ;Swap LSB <-> MSB
-    move.w  d0,(a5)                     ;Writing one word to the ATA bus
+    move.w  (a0)+,(a5)                  ;Reading one word from memory to the ATA bus
     dbra    d1,.WriteLoop               ;Loop
     add.l   d2,scsi_Actual(a2)
     bra.b   .Loop                       ;Loop
@@ -5677,9 +5657,7 @@ atapi_ScsiCmd
 ;*************** Read data from the ATA bus ***********************************
 
 .ReadLoop
-    move.w  (a5),d0                     ;Reading one word from the ATA bus
-    rol.w   #8,d0                       ;Swap LSB <-> MSB
-    move.w  d0,(a0)+                    ;Writing one word to memory
+    move.w  (a5),(a0)+                  ;Reading one word from the ATA bus to memory
     dbra    d1,.ReadLoop                ;Loop
     add.l   d2,scsi_Actual(a2)
     bra.b   .Loop                       ;Loop
@@ -5691,7 +5669,7 @@ atapi_ScsiCmd
     beq.w   .End                        ;No, exit
     move.b  #2,scsi_Status(a2)          ;Yes, set the bit
 
-    move.w  #SCSI_REQUESTSENSE<<8,(a4)+ ;ATAPI command "Request Sense"
+    move.w  #SCSI_REQUESTSENSE,(a4)+ ;ATAPI command "Request Sense"
     clr.w   (a4)+
     clr.l   (a4)+
     clr.l   (a4)                        ;We clear the CDB
@@ -5751,9 +5729,7 @@ atapi_ScsiCmd
     lsr.w   #1,d1
     subq.w  #1,d1
 .SenseLoop2
-    move.w  (a5),d0                     ;Reading one word
-    rol.w   #8,d0                       ;Swap LSB <-> MSB
-    move.w  d0,(a0)+                    ;Writing one word to memory
+    move.w  (a5),(a0)+                  ;Reading one word to memory
     dbra    d1,.SenseLoop2              ;Loop
     bra.b   .SenseLoop1
 

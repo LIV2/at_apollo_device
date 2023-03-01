@@ -980,11 +980,11 @@ InitUnit
     move.l  #ATA_TimeOut*8,au_NumLoop(a3)   ;Number of loops x 8 for BUSY
     ENDC
 
-    lea     ata_SlowReadNorm(pc),a0
+    lea     ata_FastReadNorm(pc),a0
     move.l  a0,au_ReadSub(a3)           ;Read routine
-    lea     ata_SlowWriteNorm(pc),a0
+    lea     ata_FastWriteNorm(pc),a0
     move.l  a0,au_WriteSub(a3)          ;Write routine
-    lea     ata_SlowWriteNorm(pc),a0
+    lea     ata_FastWriteNorm(pc),a0
     move.l  a0,au_FormatSub(a3)         ;Format routine
     lea     ata_Seek(pc),a0
     move.l  a0,au_SeekSub(a3)           ;Seek routine
@@ -3087,8 +3087,13 @@ ata_FastReadNorm
     bsr.w   CalcBlockAddr               ;Compute block address
     beq.w   .Error1                     ;Error : exit
 
-    lea     $3D0(a5),a5                 ;A5 : Source
-    moveq   #$30,d7                     ;D7 : Incr�ment
+    ; NOTE:
+    ; 68000 does an uninteded read at the end of a movem
+    ; Setting the source to be ata_Error - <transfer-size> causes this read to come from the error register
+    ; If not for this we would potentially corrupt the data on reads
+
+    lea     ata_Error-48(a5),a5        ;A5 : Source
+    moveq   #48,d7                     ;D7 : Increment
 
 .SectLoop
     move.b  d1,ata_SectorCnt(a5)        ;Number of sectors to read
@@ -3200,8 +3205,14 @@ ata_FastReadSwap
     bsr.w   CalcBlockAddr               ;Compute block address
     beq.w   .Error1                     ;Error : exit
 
-    lea     $3D0(a5),a5                 ;A5 : Source
-    moveq   #$30,d7                     ;D7 : Increment
+
+    ; NOTE:
+    ; 68000 does an uninteded read at the end of a movem
+    ; Setting the source to be ata_Error - <transfer-size> causes this read to come from the error register
+    ; If not for this we would potentially corrupt the data on reads
+
+    lea     ata_Error-48(a5),a5                 ;A5 : Source
+    moveq   #48,d7                     ;D7 : Increment
 .SectLoop
     move.b  d1,ata_SectorCnt(a5)        ;Number of sectors to read
     move.b  #ATA_READ,ata_Command(a5)   ;ATA read command ($20)

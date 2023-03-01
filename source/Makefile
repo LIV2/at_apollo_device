@@ -1,4 +1,4 @@
-PROGRAM=AT-Apollo
+PROGRAM=ide
 INCLUDE=../include
 AS=vasmm68k_mot
 ASFLAGS=-Fhunk -I$(INCLUDE) -quiet -align -m68000

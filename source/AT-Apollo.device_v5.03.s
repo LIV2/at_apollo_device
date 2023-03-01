@@ -175,10 +175,10 @@ FuncTable
     dc.w    -1
 
 ATName
-    dc.b    "AT-Apollo.device",0
+    dc.b    "ide.device",0
     dc.b    "$VER: "
 IDString
-    dc.b    "AT-Apollo.device 5.03 (8 Dec 1999 F.Requin)",13,10,0
+    dc.b    "ide.device 5.03 (8 Dec 1999 F.Requin)",13,10,0
 CDName
     dc.b    "Apollo device rewrite by F. Requin",0
 TaskName

@@ -5504,9 +5504,26 @@ ScsiError
 
     move.l  sp,a0
     move.b  #$70,(a0)+                  ;Current error
+
+    IFD CPU020
+
     move.w  d1,(a0)+                    ;Sense key
     move.l  au_LBASense(a3),(a0)+       ;LBA where the error occured
+
+    ELSE
+
+    clr.b  (a0)+
+    move.b  d1,(a0)+
+    move.b  au_LBASense(a3),(a0)+       ;LBA where the error occured
+    move.b  au_LBASense+1(a3),(a0)+     ;LBA where the error occured
+    move.b  au_LBASense+2(a3),(a0)+     ;LBA where the error occured
+    move.b  au_LBASense+3(a3),(a0)+     ;LBA where the error occured
+
+    ENDC
+
     move.b  #10,(a0)+                   ;Additional size
+
+
     clr.l   (a0)+
     move.w  d0,(a0)+                    ;Additional sense code
     clr.l   (a0)+
@@ -6219,8 +6236,22 @@ scsi_RequestSense
 
     move.l  sp,a0
     move.b  #$70,(a0)+                  ;Current error
+    IFD CPU020
+
     move.w  d1,(a0)+                    ;Sense key
     move.l  au_LBASense(a3),(a0)+       ;LBA where the error occured
+
+    ELSE
+
+    clr.b  (a0)+
+    move.b  d1,(a0)+
+    move.b  au_LBASense(a3),(a0)+       ;LBA where the error occured
+    move.b  au_LBASense+1(a3),(a0)+     ;LBA where the error occured
+    move.b  au_LBASense+2(a3),(a0)+     ;LBA where the error occured
+    move.b  au_LBASense+3(a3),(a0)+     ;LBA where the error occured
+
+
+    ENDC
     move.b  #10,(a0)+                   ;Extra size
     clr.l   (a0)+
     move.w  d0,(a0)+                    ;Additional sense code

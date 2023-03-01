@@ -4233,9 +4233,10 @@ TestDevice
 
     move.b  d6,ata_DevHead(a5)          ;Select the drive
     moveq   #7,d1                       ;8 registers to test
-    moveq   #-1,d0                      ;D0 : $FFFFFFFF
 .BusLoop
-    cmp.l   (a1),d0                     ;$FFFFFFFF present everywhere ?
+    move.b  (a1),d0                     ;$C0 present everywhere ? (D6/7 has pull-ups)
+    andi.b  #$c0,d0
+    cmp.b   #$c0,d0
     bne.b   .BusFound                   ;No, there is something
     lea     ata_NextReg(a1),a1          ;Yes, next register
     dbra    d1,.BusLoop                 ;Loop

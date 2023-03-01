@@ -13,7 +13,7 @@
 ;>log main ram:scsi.log
 ;>log
 
-CPU020 SET 1
+;CPU020 SET 1
 ;DEBUG   SET 1
 ;SERDBG  SET 1
 ;PROTECT SET 1
@@ -52,9 +52,9 @@ PVDBG = 0
 ;---------------
 
 BLOCK_SIZE    = 512         ;Block/sector size (in bytes)
-CONST_NUM     = $2222       ;Manufacturer : 3-States / ACT
-PRODUCT_COMBI = $22         ;AT + SCSI + memory card
-PRODUCT_ATA   = $33         ;AT only controller card
+CONST_NUM     = $082C       ;Manufacturer : BSC
+PRODUCT_COMBI = $22         ;AT + SCSI + memory card (not used here)
+PRODUCT_ATA   = $6          ;AT-Bus IDE card
 
 ATA_TimeOut   =  500000
 ATAPI_TimeOut = 1000000
@@ -339,11 +339,11 @@ InitRoutine
     bne.b   .Loop                       ;No, next card
 
 .FoundProd
-    move.l  cd_Unused(a0),d0            ;D0 : Special identifier
-    cmpi.l  #'APOL',d0                  ;Apollo controller ON ?
-    beq.b   .FoundCtrl                  ;Yes, continue
-    cmpi.l  #'APOX',d0                  ;Apollo controller OFF ?
-    bne.b   .Loop                       ;No, next card
+;    move.l  cd_Unused(a0),d0            ;D0 : Special identifier
+;    cmpi.l  #'APOL',d0                  ;Apollo controller ON ?
+;    beq.b   .FoundCtrl                  ;Yes, continue
+;    cmpi.l  #'APOX',d0                  ;Apollo controller OFF ?
+;    bne.b   .Loop                       ;No, next card
 
 .FoundCtrl
     move.l  #113,cd_Unused+4(a0)
@@ -351,6 +351,7 @@ InitRoutine
     move.l  a1,LN_NAME(a0)              ;"ConfigDev" structure name
     move.l  a5,cd_Driver(a0)            ;Device address
     move.l  cd_BoardAddr(a0),a1         ;A1 : First IDE port address
+    add.l   #ata_DataPort,a1
 
 ;*************** Primary connector auto-detect ********************************
 

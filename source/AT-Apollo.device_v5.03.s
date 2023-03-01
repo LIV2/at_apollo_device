@@ -4,7 +4,7 @@
 ;******                                                                  ******
 ;****** ---------------------------------------------------------------- ******
 ;******                                                                  ******
-;******              (c) Copyright 1996-2023 Frédéric REQUIN             ******
+;******              (c) Copyright 1996-2023 Frï¿½dï¿½ric REQUIN             ******
 ;******                                                                  ******
 ;******************************************************************************
 
@@ -369,7 +369,7 @@ InitRoutine
     bsr.w   TestDevice                  ;Test if drive is present
     beq.b   .NoMaster1
 
-    bsr.w   TestMirror                  ;Décodage incomplet ?
+    bsr.w   TestMirror                  ;Dï¿½codage incomplet ?
     beq.b   .NoSlave1                   ;Yes, no slave present
 
     IFD SERDBG
@@ -1707,10 +1707,10 @@ jmp_Write
     and.w   au_WCacheSize(a3),d2        ;D2: Buffer index in the cache
 
     IFND CPU020
-    add.w   d2,d2                       ;D2: N° x 2 -> Flags index
+    add.w   d2,d2                       ;D2: Nï¿½ x 2 -> Flags index
     move.w  d2,d3
     add.w   d3,d3
-    add.w   d3,d3                       ;D3: N° x 8 -> Tags index
+    add.w   d3,d3                       ;D3: Nï¿½ x 8 -> Tags index
     ENDC
 
     ;-------- Optimized code --------
@@ -2020,13 +2020,13 @@ cmd_GetGeometry
     move.l  IO_DATA(a1),a0
     move.l  IO_LENGTH(a1),d0            ;D0: Response length
     moveq   #dg_SIZEOF,d2
-    cmpi.l  d2,d0                       ;= sizeof(DriveGeometry) ?
+    cmp.l   d2,d0                       ;= sizeof(DriveGeometry) ?
     beq.b   .Standard                   ;Yes, CBM defined info
     move.w  #BLOCK_SIZE,d2
-    cmpi.l  d2,d0                       ;= BLOCK_SIZE ?
+    cmp.l   d2,d0                       ;= BLOCK_SIZE ?
     beq.b   .Apollo                     ;Yes, Apollo-Install info
     addq.l  #2,d2
-    cmpi.l  d2,d0                       ;= BLOCK_SIZE + 2 ?
+    cmp.l   d2,d0                       ;= BLOCK_SIZE + 2 ?
     beq.b   .Ata                        ;Yes, ATA-3 auto-detect
 .Error
     move.b  #TDERR_NotSpecified,IO_ERROR(a1) ;No, error
@@ -2384,7 +2384,7 @@ cmd_DevQuery
 
 ;******************************************************************************
 ;********                                                              ********
-;********        Tâche attendant les messages envoyés au device        ********
+;********        Tï¿½che attendant les messages envoyï¿½s au device        ********
 ;********                                                              ********
 ;******************************************************************************
 
@@ -3105,7 +3105,7 @@ ata_FastReadNorm
     beq.w   .Error1                     ;Error : exit
 
     lea     $3D0(a5),a5                 ;A5 : Source
-    moveq   #$30,d7                     ;D7 : Incrément
+    moveq   #$30,d7                     ;D7 : Incrï¿½ment
 
 .SectLoop
     move.b  d1,ata_SectorCnt(a5)        ;Number of sectors to read

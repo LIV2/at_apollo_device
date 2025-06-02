@@ -2628,10 +2628,12 @@ atapi_Read
     bsr.w   SendPacket                  ;Send CDB's 12 bytes
     beq.w   atapi_ErrCmd                ;An error has occured
 
+    move.l #200,d2
 .Loop
     bsr.w   WaitBusySlow                ;Wait for BUSY == 0
     beq.w   atapi_ErrCmd                ;Time-out elapsed : error
     btst    #ATAPIB_DATAREQ,d0          ;Some data to transfer ?
+    dbne    d2,.Loop
     beq.w   atapi_EndCmd                ;No, skip
     move.b  atapi_Reason(a5),d0         ;Interrupt Reason Register
     andi.b  #ATAPIF_MASK,d0             ;Bits IO & CoD
@@ -2697,10 +2699,12 @@ atapi_Write
     bsr.w   SendPacket                  ;Send CDB's 12 bytes
     beq.w   atapi_ErrCmd                ;An error has occured
 
+    move.l  #200,d2
 .Loop
     bsr.w   WaitBusySlow                ;Wait for BUSY == 0
     beq.w   atapi_ErrCmd                ;Time-out elapsed : error
     btst    #ATAPIB_DATAREQ,d0          ;Some data to transfer ?
+    dbne    d2,.Loop
     beq.w   atapi_EndCmd                ;No, skip
     move.b  atapi_Reason(a5),d0         ;Interrupt Reason Register
     andi.b  #ATAPIF_MASK,d0             ;Bits IO & CoD
@@ -5155,8 +5159,8 @@ SendPacket
     beq.b   .Error                      ;Time-out elapsed : error
     moveq   #0,d0
     move.b  d0,atapi_Features(a5)
-    move.b  d0,atapi_ByteCntH(a5)
-    move.b  d0,atapi_ByteCntL(a5)
+    move.b  #$FF,atapi_ByteCntH(a5)
+    move.b  #$FE,atapi_ByteCntL(a5)
     move.b  #ATAPI_PACKET,atapi_Command(a5) ;Send the CDB
     bsr.b   WaitBusySlow                ;Wait for BUSY == 0
     beq.b   .Error                      ;Time-out elapsed : error
@@ -5661,11 +5665,12 @@ atapi_ScsiCmd
     moveq   #0,d1
 
 ;*************** Initialize the data transfer *********************************
-
+    move.l  #200,d2
 .Loop
     bsr.w   WaitBusySlow                ;Wait for BUSY == 0
     beq.w   .Error                      ;Time-out elapsed : error
     btst    #ATAPIB_DATAREQ,d0          ;Some data to transfer ?
+    dbne    d2,.Loop
     beq.b   .NoData                     ;No, skip
     move.b  atapi_Reason(a5),d0         ;"Interrupt Reason Register"
     btst    #ATAPIB_COD,d0              ;Ready to transfer data ?

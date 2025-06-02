@@ -805,6 +805,15 @@ Open
     movem.l d2/a2-a4,-(sp)
     move.l  a1,a2                       ;A2 : Standard I/O Request
     move.l  a6,IO_DEVICE(a2)            ;Device pointer
+    cmp.l   #0,d0
+    beq.s   .NotLUN
+    divu    #10,d0                      ; LUN (10s column) ?
+    beq.s   .NotLUN
+    move.l  #TDERR_BadUnitNum,d0        ; If HDToolbox sees any other error it will stop scanning
+    bra.s   .End
+.NotLUN
+    swap.w  d0
+    and.l   #$FF,d0
     cmp.w   ad_NumUnits(a6),d0          ;Unit number too high ?
     bcc.b   .Error                      ;Yes, error
 

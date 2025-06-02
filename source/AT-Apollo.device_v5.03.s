@@ -324,28 +324,37 @@ InitRoutine
 
     moveq   #0,d7                       ;Unit number = 0
     moveq   #0,d5                       ;Controller number = 0
-    sub.l   a0,a0                       ;Start of "ConfigDev" list
-.Loop
-    move.l  #CONST_NUM,d0               ;Manufacturer ID
-    moveq   #-1,d1                      ;Any product ID
-    jsr     _LVOFindConfigDev(a6)
+    
+    ; Allocate CurrentBinding structure on stack
+    sub.l   #CurrentBinding_SIZEOF,a7   ;Allocate space for CurrentBinding
+    move.l  a7,a0                       ;A0: CurrentBinding structure
+    move.l  #CurrentBinding_SIZEOF,d0   ;D0: Size of CurrentBinding
+    jsr     _LVOGetCurrentBinding(a6)
+    move.l  a7,a0                       ;Restore CurrentBinding pointer
+    add.l   #CurrentBinding_SIZEOF,a7   ;Restore stack pointer
     tst.l   d0
-    beq.w   .End                        ;0 : no more card, end of loop
-    move.l  d0,a0                       ;A0 : "ConfigDev" structure
-    move.b  cd_Rom+er_Product(a0),d0    ;D0 : Product ID
-    cmpi.b  #PRODUCT_ATA,d0             ;AT card?
-    beq.b   .FoundProd                  ;Yes, continue
-    cmpi.b  #PRODUCT_COMBI,d0           ;AT + SCSI card ?
-    bne.b   .Loop                       ;No, next card
+    beq.w   .End                        ;No binding, end
+    move.l  cb_ConfigDev(a0),a0         ;A0: First ConfigDev
+
+.Loop
+    cmp.l   #0,a0                       ;Check if ConfigDev exists
+    beq.w   .End                        ;No more ConfigDev, end
+;   move.b  cd_Rom+er_Product(a0),d0    ;D0 : Product ID
+;   cmpi.b  #PRODUCT_ATA,d0             ;AT card?
+;   beq.b   .FoundProd                  ;Yes, continue
+;   cmpi.b  #PRODUCT_COMBI,d0           ;AT + SCSI card ?
+;   bne.b   .Next                       ;No, next ConfigDev
 
 .FoundProd
-;    move.l  cd_Unused(a0),d0            ;D0 : Special identifier
-;    cmpi.l  #'APOL',d0                  ;Apollo controller ON ?
-;    beq.b   .FoundCtrl                  ;Yes, continue
-;    cmpi.l  #'APOX',d0                  ;Apollo controller OFF ?
-;    bne.b   .Loop                       ;No, next card
+;   move.l  cd_Unused(a0),d0            ;D0 : Special identifier
+;   cmpi.l  #'APOL',d0                  ;Apollo controller ON ?
+;   beq.b   .FoundCtrl                  ;Yes, continue
+;   cmpi.l  #'APOX',d0                  ;Apollo controller OFF ?
+;   bne.b   .Next                       ;No, next ConfigDev
 
 .FoundCtrl
+    bclr.b  #CDB_CONFIGME,cd_Flags(a0)  ;Test & Clear CONFIGME
+    beq.s   .Next                       ;Already cleared
     move.l  #113,cd_Unused+4(a0)
     lea     CDName(pc),a1
     move.l  a1,LN_NAME(a0)              ;"ConfigDev" structure name
@@ -391,7 +400,7 @@ InitRoutine
 .NoSlave1
     addq.b  #1,d5                       ;Next controller
     bsr.w   TestPort2                   ;4-IDE interface present ?
-    bne.b   .Loop                       ;No, next Apollo card
+    bne.b   .Next                       ;No, next ConfigDev
 
 ;*************** Secondary connector auto-detect ******************************
 
@@ -432,7 +441,10 @@ InitRoutine
 
 .NoSlave2
     addq.b  #1,d5                       ;Next controller
-    bra.w   .Loop                       ;Next Apollo card
+
+.Next
+    move.l  cd_NextCD(a0),a0            ;Move to next ConfigDev
+    bra.w   .Loop                       ;Continue loop
 
 ;*************** End : closing "expansion.library" ****************************
 

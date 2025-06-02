@@ -330,11 +330,10 @@ InitRoutine
     move.l  a7,a0                       ;A0: CurrentBinding structure
     move.l  #CurrentBinding_SIZEOF,d0   ;D0: Size of CurrentBinding
     jsr     _LVOGetCurrentBinding(a6)
-    move.l  a7,a0                       ;Restore CurrentBinding pointer
+    move.l  cb_ConfigDev(a7),a0         ;A0: First ConfigDev
     add.l   #CurrentBinding_SIZEOF,a7   ;Restore stack pointer
     tst.l   d0
     beq.w   .End                        ;No binding, end
-    move.l  cb_ConfigDev(a0),a0         ;A0: First ConfigDev
 
 .Loop
     cmp.l   #0,a0                       ;Check if ConfigDev exists
